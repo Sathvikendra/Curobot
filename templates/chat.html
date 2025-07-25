@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Curobot - The Medical Chatbot</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css')}}"/>
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat-header">
+      <img src="https://cdn-icons-png.flaticon.com/512/387/387569.png" alt="Bot">
+      <h5 class="mb-0">Curobot</h5>
+    </div>
+    <div class="chat-body" id="chatBody">
+      <!-- Messages will be appended here -->
+    </div>
+    <div class="chat-footer">
+      <input type="text" id="userInput" placeholder="Type your message..." autocomplete="off">
+      <button id="sendBtn"><i class="fas fa-paper-plane"></i></button>
+    </div>
+  </div>
+
+  <script>
+    const chatBody = document.getElementById("chatBody");
+    const userInput = document.getElementById("userInput");
+    const sendBtn = document.getElementById("sendBtn");
+
+    const userIcon = "https://cdn-icons-png.flaticon.com/512/236/236831.png";
+    const botIcon = "https://cdn-icons-png.flaticon.com/512/387/387569.png";
+
+    function appendMessage(sender, text, iconUrl) {
+      const msgDiv = document.createElement("div");
+      msgDiv.classList.add("chat-msg", sender);
+
+      const img = document.createElement("img");
+      img.src = iconUrl;
+
+      const bubble = document.createElement("div");
+      bubble.classList.add("msg");
+      bubble.textContent = text;
+
+      if (sender === "user") {
+        msgDiv.appendChild(bubble);
+        msgDiv.appendChild(img);
+      } else {
+        msgDiv.appendChild(img);
+        msgDiv.appendChild(bubble);
+      }
+
+      chatBody.appendChild(msgDiv);
+      chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const message = userInput.value.trim();
+      if (!message) return;
+      appendMessage("user", message, userIcon);
+      userInput.value = "";
+
+      try {
+        const formData = new FormData();
+        formData.append("msg", message);
+
+        const response = await fetch("/get", {
+          method: "POST",
+          body: formData
+        });
+
+        const data = await response.text();
+        appendMessage("bot", data, botIcon);
+      } catch (error) {
+        appendMessage("bot", "Sorry, something went wrong.", botIcon);
+      }
+    }
+
+    sendBtn.addEventListener("click", sendMessage);
+    userInput.addEventListener("keypress", function (e) {
+      if (e.key === "Enter") {
+        sendMessage();
+        e.preventDefault();
+      }
+    });
+
+    // Initial time-based greeting
+    function getGreeting() {
+      const hour = new Date().getHours();
+      if (hour < 12) return "Good morning";
+      if (hour < 17) return "Good afternoon";
+      return "Good evening";
+    }
+    const greeting = `${getGreeting()}, how can I help you?`;
+    appendMessage("bot", greeting, botIcon);
+  </script>
+</body>
+</html>

@@ -10,4 +10,4 @@ langchain-google-genai
 huggingface_hub
 langchain-community==0.3.26
 
-# -e .
+-e .

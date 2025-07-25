@@ -1,0 +1,10 @@
+LICENSE
+README.md
+setup.py
+Curobot.egg-info/PKG-INFO
+Curobot.egg-info/SOURCES.txt
+Curobot.egg-info/dependency_links.txt
+Curobot.egg-info/top_level.txt
+src/__init__.py
+src/helper.py
+src/prompt.py
