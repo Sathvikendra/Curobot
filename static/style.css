@@ -81,3 +81,27 @@ body {
     margin-left: 10px;
     color: white;
 }
+.typing-indicator {
+    display: flex;
+    align-items: center;
+    margin: 5px;
+    color: #555;
+}
+.typing-indicator img {
+    width: 25px;
+    height: 25px;
+    margin-right: 8px;
+}
+.spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #000;
+    border-top: 2px solid #388e3c;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 6px;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

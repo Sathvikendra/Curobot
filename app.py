@@ -10,6 +10,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from src.helper import download_embeddings,rag_or_gemini,log_chat
 from src.prompt import *
 from flask import Flask,render_template,jsonify,request
+import sys
 
 app=Flask(__name__)
 load_dotenv()
@@ -47,6 +48,12 @@ prompt=ChatPromptTemplate.from_messages([
 question_answer_chain=create_stuff_documents_chain(model,prompt)
 rag_chain=create_retrieval_chain(retriever,question_answer_chain)
 
+@app.before_request
+def clear_chat_on_reload():
+    global chat_history
+    if request.endpoint == 'index':
+        chat_history=[]
+
 @app.route("/")
 def index():
     return render_template('chat.html')
@@ -63,7 +70,10 @@ def chat():
         response_text = result
     else:
         response_text = "Sorry, something went wrong."
-    print("Response : ",response_text)
+    try:
+        print("Response : ",response_text)
+    except OSError:
+        sys.stdout.write(("Response : " + str(response_text) + "\n").encode("utf-8", "ignore").decode("utf-8"))
     log_chat(query,response_text,chat_history)
     return str(response_text)
 

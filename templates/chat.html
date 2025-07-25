@@ -30,6 +30,32 @@
 
     const userIcon = "https://cdn-icons-png.flaticon.com/512/236/236831.png";
     const botIcon = "https://cdn-icons-png.flaticon.com/512/387/387569.png";
+    let typingIndicator = null;
+
+    function formatBotResponse(text) {
+      // Convert ### headings to <h3>
+      text = text.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+      // Convert ## headings to <h2>
+      text = text.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+      // Convert # headings to <h1>
+      text = text.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+
+      // Convert ***bold+italic*** to <strong><em>
+      text = text.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>');
+      // Convert **bold** to <strong>
+      text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      // Convert *italic* to <em>
+      text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+      // Convert bullet points * to <li>
+      text = text.replace(/\n?\* (.*?)(?=\n|$)/g, '<li>$1</li>');
+      // Wrap list items with <ul>
+      text = text.replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>');
+
+      // Paragraph breaks
+      text = text.replace(/\n\n/g, '<br><br>');
+      return text;
+    }
 
     function appendMessage(sender, text, iconUrl) {
       const msgDiv = document.createElement("div");
@@ -40,7 +66,7 @@
 
       const bubble = document.createElement("div");
       bubble.classList.add("msg");
-      bubble.textContent = text;
+      bubble.innerHTML = sender === "bot" ? formatBotResponse(text) : text;
 
       if (sender === "user") {
         msgDiv.appendChild(bubble);
@@ -54,11 +80,27 @@
       chatBody.scrollTop = chatBody.scrollHeight;
     }
 
+    function showTypingIndicator() {
+      typingIndicator = document.createElement("div");
+      typingIndicator.classList.add("typing-indicator");
+      typingIndicator.innerHTML = `<img src="${botIcon}" alt="Bot"><div class="spinner"></div> Bot is typing...`;
+      chatBody.appendChild(typingIndicator);
+      chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    function removeTypingIndicator() {
+      if (typingIndicator) {
+        typingIndicator.remove();
+        typingIndicator = null;
+      }
+    }
+
     async function sendMessage() {
       const message = userInput.value.trim();
       if (!message) return;
       appendMessage("user", message, userIcon);
       userInput.value = "";
+      showTypingIndicator();
 
       try {
         const formData = new FormData();
@@ -70,8 +112,10 @@
         });
 
         const data = await response.text();
+        removeTypingIndicator();
         appendMessage("bot", data, botIcon);
       } catch (error) {
+        removeTypingIndicator();
         appendMessage("bot", "Sorry, something went wrong.", botIcon);
       }
     }
