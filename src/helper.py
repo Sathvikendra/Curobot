@@ -15,8 +15,7 @@ def text_split(data):
     return chunk
 
 def download_embeddings():
-    embeddings=HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-    return embeddings
+    return HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
 def log_chat(query, answer, chat_history):
     chat_history.append({
