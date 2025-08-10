@@ -1,2 +1,4 @@
 .env
-.vscode/
+vscode/
+Curobot.egg-info/
+data/
