@@ -1,4 +1,7 @@
 .env
-vscode/
+.vscode/
 Curobot.egg-info/
 data/
+functions/
+research/
+src/__pycache__/
