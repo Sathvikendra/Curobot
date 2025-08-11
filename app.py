@@ -8,7 +8,7 @@ from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
 from flask import Flask, render_template, request
-from src.helper import rag_or_gemini, log_chat
+from src.helper import download_embeddings,rag_or_gemini, log_chat
 from src.prompt import system_prompt
 
 load_dotenv()
@@ -48,8 +48,9 @@ def init_pinecone_and_chain():
             )
 
         # Use API-based embeddings (no local model)
-        from langchain_openai import OpenAIEmbeddings
-        embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+        # from langchain_openai import OpenAIEmbeddings
+        embeddings = download_embeddings()
+        #OpenAIEmbeddings(model="text-embedding-3-small")
 
         docsearch = PineconeVectorStore.from_existing_index(
             index_name=index_name,
