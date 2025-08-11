@@ -9,12 +9,11 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.embeddings import HuggingFaceEmbeddings
 from flask import Flask, render_template, request
-from src.helper import download_embeddings,rag_or_gemini, log_chat
+from src.helper import rag_or_gemini, log_chat
 from src.prompt import system_prompt
 
+# Load environment variables
 load_dotenv()
-
-# API Keys from environment
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 os.environ["PINECONE_API_KEY"] = PINECONE_API_KEY
@@ -25,7 +24,10 @@ genai.configure(api_key=GOOGLE_API_KEY)
 
 app = Flask(__name__)
 
-# Lazy globals (only created when first used)
+# ------------------------------
+# GLOBALS (only loaded once)
+# ------------------------------
+embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 pinecone_client = None
 retriever = None
 model = None
@@ -33,7 +35,7 @@ rag_chain = None
 chat_history = []
 
 def init_pinecone_and_chain():
-    """Initialize Pinecone connection, retriever, and RAG chain lazily."""
+    """Initialize Pinecone, retriever, and RAG chain only once."""
     global pinecone_client, retriever, model, rag_chain
 
     if pinecone_client is None:
@@ -43,23 +45,25 @@ def init_pinecone_and_chain():
         if index_name not in pinecone_client.list_indexes().names():
             pinecone_client.create_index(
                 name=index_name,
-                dimension=1536,  # API embedding dimension
+                dimension=1536,
                 metric="cosine",
                 spec=ServerlessSpec(cloud="aws", region="us-east-1")
             )
 
-        # Use API-based embeddings (no local model)
-        # from langchain_openai import OpenAIEmbeddings
-        embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-        #OpenAIEmbeddings(model="text-embedding-3-small")
-
+        # Reuse the global embeddings here
         docsearch = PineconeVectorStore.from_existing_index(
             index_name=index_name,
             embedding=embeddings
         )
-        retriever = docsearch.as_retriever(search_type="similarity", search_kwargs={"k": 3})
+        retriever = docsearch.as_retriever(
+            search_type="similarity",
+            search_kwargs={"k": 3}
+        )
 
-        model = ChatGoogleGenerativeAI(model="gemini-2.5-pro", google_api_key=GOOGLE_API_KEY)
+        model = ChatGoogleGenerativeAI(
+            model="gemini-2.5-pro",
+            google_api_key=GOOGLE_API_KEY
+        )
 
         prompt = ChatPromptTemplate.from_messages([
             ("system", system_prompt),
@@ -82,7 +86,7 @@ def index():
 @app.route("/get", methods=["POST"])
 def chat():
     global chat_history
-    init_pinecone_and_chain()  # Ensure everything is loaded
+    init_pinecone_and_chain()
 
     msg = request.form["msg"]
     query = msg.strip()
